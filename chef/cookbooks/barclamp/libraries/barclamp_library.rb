@@ -264,6 +264,24 @@ module BarclampLibrary
           end
         end
 
+        # return 2 lists of unclaimed disks:
+        #   - first with the disks that have the given role set
+        #   - second with the disks with no assigned role
+        def self.prepared_for(node,role)
+          disk_roles = node["crowbar_wall"]["disk_roles"] || {}
+          prepared_role = []
+          without_role = []
+          unclaimed(node).each do |d|
+            disk_role = disk_roles.fetch(d.unique_name, "")
+            if disk_role == role
+              prepared_role << d
+            elsif disk_role.empty?
+              without_role << d
+            end
+          end
+          [ prepared_role, without_role ]
+        end
+
         def self.claimed(node,owner)
           all(node).select do |d|
             d.claimed? and d.owner == owner
